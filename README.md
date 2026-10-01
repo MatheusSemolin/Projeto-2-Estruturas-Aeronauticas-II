@@ -1,1 +1,1 @@
-# Projeto-2---Estruturas-Aeron-uticas-II
+# Projeto-2-Estruturas-Aeronauticas-II
