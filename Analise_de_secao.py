@@ -9,7 +9,7 @@ import ezdxf
 import ezdxf.path
 
 # 1. Caminho dos arquivos dxf
-pasta_dxfs = Path(r"C:\Users\mathe\OneDrive - Unesp\UNESP\Atividades\Estruturas_II\Seções_projeto_2_dxf")
+pasta_dxfs = Path("Secoes_dxf")
 
 # 2. Pega todos os arquivos .dxf da pasta
 dxf_paths = list(pasta_dxfs.glob("*.dxf"))
