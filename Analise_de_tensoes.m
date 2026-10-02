@@ -3,10 +3,10 @@ clc; clear variables; close all;
 
 % Nós: [ID, x, y, Area_do_Boom]
 sec.malha.nodes = [
-    1,  0,  10.8, 0; 
-    2,  0,  0, 14.811;
-    3,   40.60, 0.4, 0;
-    4, 40.60, 51.2, 2*14.811;
+    1,  0.4,  10.8, 0; 
+    2,  0.4,  0.4,0;
+    3,  41, 0.4, 14.536;
+    4, 41, 51.2, 2*14.536;
     5, 10, 51.2, 0;
     6, 72, 51.2, 0
 ];
@@ -38,16 +38,16 @@ sec.cargas.N  = 1560;       % Carga axial atuante [N]
 % Propriedades
 % =========================================================
 sec.nome      = 'Perfil Longarina J';
-sec.propriedades.Ixx = 99347.03;
-sec.propriedades.Iyy = 42829.78;
-sec.propriedades.Ixy = 26755.18;
-sec.propriedades.centroide = [36.694, 28.395];
-sec.propriedades.centro_de_cisalhamento = [47.10, 22.59];
-sec.propriedades.I_eta     = 32173.24;      % Menor momento de inércia principal [mm^4]
-sec.propriedades.A         = 237.42;         % Área da secção transversal [mm^2]
+sec.propriedades.Ixx = 100227.32 ;
+sec.propriedades.Iyy = 42856.77;
+sec.propriedades.Ixy = 26825.71 ;
+sec.propriedades.centroide = [36.718, 28.431];
+sec.propriedades.centro_de_cisalhamento = [47.04 22.56];
+sec.propriedades.I_eta     = 32267.83;      % Menor momento de inércia principal [mm^4]
+sec.propriedades.A         = 239.09;         % Área da secção transversal [mm^2]
 sec.propriedades.E         = 72395;       % Módulo de Elasticidade [MPa]
 sec.propriedades.L_viga    = 320;         % Comprimento destravado da coluna [mm]
-sec.propriedades.c         = 1.0;         % Fator de comprimento efetivo (c) [Adimensional]
+sec.propriedades.c         = 2.0;         % Fator de comprimento efetivo (c) [Adimensional]
 sec.propriedades.sigma_E   = 370;         % Tensão limite elástica do material [MPa]
 sec.propriedades.n         = 9.2;         % Expoente de Ramberg-Osgood
 sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
@@ -63,7 +63,7 @@ sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
 % =========================================================================
 %  FLAMBAGEM GLOBAL (Elástica e Plástica)
 % =========================================================================
-disp('Iniciando análise de flambagem global...');
+fprintf('\n Análise de flambagem global \n');
 [sec] = flambagem_global(sec);
 
 disp('---------------------------------------------------------');
@@ -71,25 +71,25 @@ disp('Processo concluído com sucesso!');
 
 %%
 
-
-% 2. Junta tudo em um único vetor de nós
-todos_os_nos = [sec.malha.panels(:, 1); sec.malha.panels(:, 2)];
-
-% 3. Encontra nós únicos e conta quantas vezes cada um aparece na malha
-[nos_unicos, ~, ic] = unique(todos_os_nos);
-contagens = accumarray(ic, 1);
-
-% 4. Filtra os nós que aparecem 2 ou mais vezes (Nós compartilhados / não-livres)
-nos_compartilhados = nos_unicos(contagens >= 2);
-
-% 5. Filtra os nós que aparecem APENAS 1 vez (Pontas livres / Flanges livres)
-nos_livres = nos_unicos(contagens == 1);
-
-% Exibe no Command Window para conferir
-disp('Nós compartilhados (Junções / Almas):');
-disp(nos_compartilhados');
-
-disp('Nós de extremidade (Pontas livres / Flanges):');
-disp(nos_livres');
+% 
+% % 2. Junta tudo em um único vetor de nós
+% todos_os_nos = [sec.malha.panels(:, 1); sec.malha.panels(:, 2)];
+% 
+% % 3. Encontra nós únicos e conta quantas vezes cada um aparece na malha
+% [nos_unicos, ~, ic] = unique(todos_os_nos);
+% contagens = accumarray(ic, 1);
+% 
+% % 4. Filtra os nós que aparecem 2 ou mais vezes (Nós compartilhados / não-livres)
+% nos_compartilhados = nos_unicos(contagens >= 2);
+% 
+% % 5. Filtra os nós que aparecem APENAS 1 vez (Pontas livres / Flanges livres)
+% nos_livres = nos_unicos(contagens == 1);
+% 
+% % Exibe no Command Window para conferir
+% disp('Nós compartilhados (Junções / Almas):');
+% disp(nos_compartilhados');
+% 
+% disp('Nós de extremidade (Pontas livres / Flanges):');
+% disp(nos_livres');
 
 

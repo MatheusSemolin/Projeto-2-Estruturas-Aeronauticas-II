@@ -96,34 +96,35 @@ for i = 1:N
     R(i) = delta_q_boom(i) + soma_q_final;
 end
 
-grau = sum(C ~= 0, 2);              % quantos paineis tocam cada no
-sem_reforco = (nodes(:,4) == 0);    % nos sem area de boom
-candidatos = find(grau > 1 & sem_reforco);
+grau = sum(C ~= 0, 2);
+sem_reforcador = (nodes(:,4) == 0);
+candidatos_de_exclusao = find(grau > 1 & sem_reforcador);
 
-if isempty(candidatos)
-    error('Nenhum no ideal para descartar');
+if isempty(candidatos_de_exclusao)
+    candidatos_de_exclusao = find(grau > 1);
 end
-no_descartar = candidatos(1);
+no_descartar = candidatos_de_exclusao(1);
 
 idx_manter = true(N, 1);
 idx_manter(no_descartar) = false;
 q0 = C(idx_manter, :) \ R(idx_manter);
 
+R_sum = sum(R);
+fprintf("Erro de arredondamento: %d\n",R_sum)
 % 6. Saída Analítica Finais
 q_total_sym = sym(zeros(P, 1));
 for p = 1:P
     q_total_sym(p) = q_sym(p) + q0(p);
     % fprintf('q0_%d = %.4f N/mm\n', panels(p,1), q0(p));
 end
+% 
+% % fprintf('\n--- EQUAÇÕES SIMBÓLICAS DO FLUXO q(s) ---\n');
+% for p = 1:P
+%     eq_formatada = char(vpa(expand(q_total_sym(p)/panels(p,3)), 3));
+%     % fprintf('Painel %d (Nó %d -> Nó %d): Tau(s) = %s\n', p,panels(p,1), panels(p,2), (eq_formatada));
+% end
 
-% fprintf('\n--- EQUAÇÕES SIMBÓLICAS DO FLUXO q(s) ---\n');
-for p = 1:P
-    eq_formatada = char(vpa(expand(q_total_sym(p)/panels(p,3)), 3));
-    % fprintf('Painel %d (Nó %d -> Nó %d): Tau(s) = %s\n', p,panels(p,1), panels(p,2), (eq_formatada));
-end
 
-erro_numerico = sum(R);
-fprintf("%d",erro_numerico)
 %% 8. Diagrama de Tensão Projetada na Direção Normal (Usando quiver)
 figure('Name', 'Diagrama de Tensão Cisalhante', 'Color', 'w');
 hold on; grid on; axis equal;
@@ -248,5 +249,5 @@ for p = 1:P
     plot(x_env, y_env, 'k', 'LineWidth', 1.5);
 end
 sec.resultados.Tau_fletor_max = tau_max;
-sec.resultados.Tau_fletor_sym = q_total_sym;
+sec.resultados.Tau_fletor_sym = matlabFunction(q_total_sym);
 end
