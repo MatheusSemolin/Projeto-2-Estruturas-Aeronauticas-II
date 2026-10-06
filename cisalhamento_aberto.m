@@ -137,9 +137,9 @@ for p = 1:P
     n2 = find(nodes(:,1) == panels(p,2));
     du = nodes(n2,2) - nodes(n1,2);
     dv = nodes(n2,3) - nodes(n1,3);
-    plot([nodes(n1,2), nodes(n2,2)], [nodes(n1,3), nodes(n2,3)], 'k','LineWidth', 1.5);
+    plot([nodes(n1,2), nodes(n2,2)], [nodes(n1,3), nodes(n2,3)], 'k','LineWidth', 1.5, 'HandleVisibility', 'off');
     quiver(nodes(n1,2), nodes(n1,3), du, dv, 0, 'Color', 'k', 'LineWidth', 2, ...
-        'ShowArrowHead', 'on', 'MaxHeadSize', 0.5);
+        'ShowArrowHead', 'on', 'MaxHeadSize', 0.5, 'HandleVisibility', 'off');
 end
 % --- PLOTAGEM DOS NÓS E REFORÇADORES ---
 
@@ -147,7 +147,7 @@ idx_sem_ref = nodes(:,4) == 0;
 idx_com_ref = nodes(:,4) > 0;
 
 if any(idx_sem_ref)
-    scatter(nodes(idx_sem_ref, 2), nodes(idx_sem_ref, 3), 40, 'k', 'filled', 'o');
+    scatter(nodes(idx_sem_ref, 2), nodes(idx_sem_ref, 3), 40, 'k', 'filled', 'o', 'HandleVisibility', 'off');
 end
 for i = 1:N
     text(nodes(i,2) + 1.5, nodes(i,3) + 1.5, sprintf('  %d', nodes(i,1)), ...
@@ -160,19 +160,19 @@ if any(idx_com_ref)
 
     % Paleta de cores dos reforçadores
     if num_areas == 1
-        cores = [0, 0.7, 0];
+        cores = [0, 1, 0];
     else
-        cores = rand(num_areas, 3);
+        cores = lines(num_areas);
     end
 
     for i = 1:num_areas
         idx_area = nodes(:,4) == areas_unicas(i);
 
-        scatter(nodes(idx_area, 2), nodes(idx_area, 3), 60, cores(i,:), ...
-            'filled', '^', 'MarkerEdgeColor', 'k');
+        h(i) = scatter(nodes(idx_area, 2), nodes(idx_area, 3), 100, cores(i,:), ...
+            'filled', 'square', 'MarkerEdgeColor', 'k');
     end
-
-
+legend(h, compose('Reforçador %d', 1:num_areas), ...
+    'Location', 'best');
 end
 % Escala
 tau_max = zeros(P,1);
@@ -237,16 +237,16 @@ for p = 1:P
 
     % Plot positivos
     quiver(x_base(idx_pos), y_base(idx_pos), U(idx_pos), V(idx_pos), 0, ...
-        'Color', 'b', 'ShowArrowHead', 'off', 'LineWidth', 1.2);
+        'Color', 'b', 'ShowArrowHead', 'off', 'LineWidth', 1.2, 'HandleVisibility', 'off');
 
     % Plot negativos
     quiver(x_base(idx_neg), y_base(idx_neg), U(idx_neg), V(idx_neg), 0, ...
-        'Color', 'r', 'ShowArrowHead', 'off', 'LineWidth', 1.2);
+        'Color', 'r', 'ShowArrowHead', 'off', 'LineWidth', 1.2, 'HandleVisibility', 'off');
 
     % Envelope
     x_env = x_base + U;
     y_env = y_base + V;
-    plot(x_env, y_env, 'k', 'LineWidth', 1.5);
+    plot(x_env, y_env, 'k', 'LineWidth', 1.5, 'HandleVisibility', 'off');
 end
 sec.resultados.Tau_fletor_max = tau_max;
 sec.resultados.Tau_fletor_sym = matlabFunction(q_total_sym);
