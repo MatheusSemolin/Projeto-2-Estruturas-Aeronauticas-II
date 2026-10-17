@@ -22,6 +22,7 @@ function [sec] = cisalhamento_aberto(sec)
 
 nodes = sec.malha.nodes;
 panels = sec.malha.panels;
+panels(:,4) = 0; 
 Vx = sec.cargas.Vx;
 Vy = sec.cargas.Vy;
 
@@ -58,7 +59,7 @@ for p = 1:P
 
     L = sqrt((x2-x1)^2 + (y2-y1)^2);
 
-    panels(p,end+1) = L;
+    panels(p,4) = L;
 
     x_s = ((x2 - x1)/L) * s + x1;
     y_s = ((y2 - y1)/L) * s + y1;
@@ -184,7 +185,7 @@ for p = 1:P
     range = linspace(0, L, 1000);
 
     [~, idmax] = max(abs(q_func(range) / t));
-    tau_max(p) = q_func(range(idmax));
+    tau_max(p) = q_func(range(idmax))/t;
 end
 
 max_dim = max(max(nodes(:,2))-min(nodes(:,2)), max(nodes(:,3))-min(nodes(:,3)));
@@ -249,5 +250,7 @@ for p = 1:P
     plot(x_env, y_env, 'k', 'LineWidth', 1.5, 'HandleVisibility', 'off');
 end
 sec.resultados.Tau_fletor_max = tau_max;
-sec.resultados.Tau_fletor_sym = matlabFunction(q_total_sym);
+for i = 1:P
+sec.resultados.Tau_fletor_sym{i} = matlabFunction(q_total_sym(i)/panels(i,3), 'Vars', s);
+end
 end

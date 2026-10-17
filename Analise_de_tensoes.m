@@ -46,6 +46,7 @@ sec.propriedades.centro_de_cisalhamento = [47.04 22.56];
 sec.propriedades.I_eta     = 32267.83;      % Menor momento de inércia principal [mm^4]
 sec.propriedades.A         = 239.09;         % Área da secção transversal [mm^2]
 sec.propriedades.E         = 72395;       % Módulo de Elasticidade [MPa]
+sec.propriedades.v = 0.33; % Coeficiente de Poisson
 sec.propriedades.L_viga    = 320;         % Comprimento destravado da coluna [mm]
 sec.propriedades.c         = 2.0;         % Fator de comprimento efetivo (c) [Adimensional]
 sec.propriedades.sigma_E   = 370;         % Tensão limite elástica do material [MPa]
@@ -55,41 +56,28 @@ sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
 % =========================================================================
 % Calculo de Tensões
 % =========================================================================
-%[sec] = Normal(sec);
+[sec] = Normal(sec);
 [sec] = cisalhamento_aberto(sec);
-%[sec] = Cisalhamento_torcor(sec);
+[sec] = Cisalhamento_torcor(sec);
 
 
 % =========================================================================
 %  FLAMBAGEM GLOBAL (Elástica e Plástica)
 % =========================================================================
-fprintf('\n Análise de flambagem global \n');
+fprintf('\n Análise de flambagem global \n'); 
 [sec] = flambagem_global(sec);
 
 disp('---------------------------------------------------------');
+
+% =========================================================================
+%  FLAMBAGEM LOCAL
+% =========================================================================
+fprintf('\n Análise de flambagem local \n'); 
+sec = coeficientes_paineis(sec,'apoiado');
+
+sec = flambagem_local(sec);
+T = table((1:size(sec.malha.panels,1))', sec.R.R_c, sec.R.R_b, ...
+    sec.R.R_s, sec.MS.local, ...
+    'VariableNames', {'Painel','R_c','R_b','R_s','MS'});
+disp(T);
 disp('Processo concluído com sucesso!');
-
-%%
-
-% 
-% % 2. Junta tudo em um único vetor de nós
-% todos_os_nos = [sec.malha.panels(:, 1); sec.malha.panels(:, 2)];
-% 
-% % 3. Encontra nós únicos e conta quantas vezes cada um aparece na malha
-% [nos_unicos, ~, ic] = unique(todos_os_nos);
-% contagens = accumarray(ic, 1);
-% 
-% % 4. Filtra os nós que aparecem 2 ou mais vezes (Nós compartilhados / não-livres)
-% nos_compartilhados = nos_unicos(contagens >= 2);
-% 
-% % 5. Filtra os nós que aparecem APENAS 1 vez (Pontas livres / Flanges livres)
-% nos_livres = nos_unicos(contagens == 1);
-% 
-% % Exibe no Command Window para conferir
-% disp('Nós compartilhados (Junções / Almas):');
-% disp(nos_compartilhados');
-% 
-% disp('Nós de extremidade (Pontas livres / Flanges):');
-% disp(nos_livres');
-
-

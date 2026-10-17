@@ -29,7 +29,7 @@ Mz = sec.cargas.Mz;
 figure('Name', 'Diagrama de Tensão Cisalhante Tocional', 'Color', 'w');
 subplot(1,2,1)
 title('Área projetada');
-hold on; 
+hold on; axis equal;
 for p = 1:P
     n1 = find(nodes(:,1) == panels(p,1));
     n2 = find(nodes(:,1) == panels(p,2));
@@ -38,8 +38,10 @@ for p = 1:P
     y_triangulo = [nodes(n1,3), nodes(n2,3),y_se];
 
     Matriz_Triangulo = [x_triangulo',y_triangulo',ones(3,1)];
+    
 
-    A_projetada = A_projetada + 0.5 * det(Matriz_Triangulo);
+    sentido(p) = sign(det(Matriz_Triangulo));  
+    A_projetada = A_projetada + 0.5 * abs(det(Matriz_Triangulo));
 
     x_fechado = [x_triangulo, nodes(n1,2)];
     y_fechado = [y_triangulo, nodes(n1,3)];
@@ -59,7 +61,7 @@ q_torcor = Mz/(2*A_projetada);
 
 for p = 1:P
     t = panels(p,3);
-    sec.resultados.tau_torcao(p) = q_torcor/t;
+    sec.resultados.tau_torcao(p) = sentido(p)*q_torcor/t;
 end
 
 % =========================================================================
@@ -83,12 +85,16 @@ yc = sec.propriedades.centroide(2);
 
 % Desenha a estrutura base
 subplot(1,2,2)
-hold on; axis equal; grid on;
+hold on; grid on; 
 title('Tensão Cisalhante Torcional')
 for p = 1:P
     n1 = find(nodes(:,1) == panels(p,1));
     n2 = find(nodes(:,1) == panels(p,2));
+    du = nodes(n2,2) - nodes(n1,2);
+    dv = nodes(n2,3) - nodes(n1,3);
     plot([nodes(n1,2), nodes(n2,2)], [nodes(n1,3), nodes(n2,3)], 'k', 'LineWidth', 2);
+    quiver(nodes(n1,2), nodes(n1,3), du, dv, 0, 'Color', 'k', 'LineWidth', 2, ...
+        'ShowArrowHead', 'on', 'MaxHeadSize', 0.5, 'HandleVisibility', 'off');
 end
 scatter(nodes(:,2), nodes(:,3), 40, 'k', 'filled');
 

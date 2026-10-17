@@ -56,6 +56,47 @@ end
 % Salva na struct
 sec.resultados.Sigma_nodes = sigma_no;
 
+% =========================================================================
+% Cálculo do comprimento sob compressão por painel
+% =========================================================================
+L_compressao = zeros(P, 1);
+
+for p = 1:P
+    id_n1 = panels(p,1);
+    id_n2 = panels(p,2);
+    idx1 = find(nodes(:,1) == id_n1);
+    idx2 = find(nodes(:,1) == id_n2);
+
+    sig1 = sigma_no(idx1);
+    sig2 = sigma_no(idx2);
+
+    % Calcula o comprimento total do painel
+    dx = nodes(idx2,2) - nodes(idx1,2);
+    dy = nodes(idx2,3) - nodes(idx1,3);
+    L_painel = sqrt(dx^2 + dy^2);
+
+    % Verifica os 3 casos de distribuição de tensão
+    if sig1 <= 0 && sig2 <= 0
+        % Totalmente comprimido
+        L_compressao(p) = L_painel;
+    elseif sig1 >= 0 && sig2 >= 0
+        % Totalmente tracionado
+        L_compressao(p) = 0;
+    else
+        % Parcialmente comprimido (muda de sinal)
+        tensao_comp = abs(min(sig1, sig2));
+        var_total = abs(sig1) + abs(sig2);
+        L_compressao(p) = L_painel * (tensao_comp / var_total);
+    end
+end
+
+% Salva na struct (mesma ordem da sec.malha.panels)
+sec.resultados.L_compressao_paineis = L_compressao;
+
+
+% =========================================================================
+% Gráficos 
+% =========================================================================
 % Gráfico do Diagrama de Tensão Normal
 figure('Name', 'Diagrama de Tensão Normal', 'Color', 'w');
 hold on; grid on; axis equal;
