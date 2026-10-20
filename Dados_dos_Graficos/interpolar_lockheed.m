@@ -1,4 +1,6 @@
 function Fcc = interpolar_lockheed(bt, cc, true_or_false)
+% Para a liga Al 7075-T6;
+% Fonte: NIU, M. C. Airframe Structual Design, Conmilit Press LTD., (1995)
 % cc: 1 = one edge free
 %     2 = no one edge free
 % bt = razão b/t
