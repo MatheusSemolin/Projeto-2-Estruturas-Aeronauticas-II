@@ -50,6 +50,7 @@ sec.propriedades.v = 0.33; % Coeficiente de Poisson
 sec.propriedades.L_viga    = 320;         % Comprimento destravado da coluna [mm]
 sec.propriedades.c         = 2.0;         % Fator de comprimento efetivo (c) [Adimensional]
 sec.propriedades.sigma_E   = 370;         % Tensão limite elástica do material [MPa]
+sec.propriedades.sigma_y   = 370;         % Tensão limite elástica do material [MPa]
 sec.propriedades.n         = 9.2;         % Expoente de Ramberg-Osgood
 sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
 
@@ -60,6 +61,12 @@ sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
 [sec] = cisalhamento_aberto(sec);
 [sec] = Cisalhamento_torcor(sec);
 
+
+
+% =========================================================================
+%  CRIPPLING NORMAL
+% =========================================================================
+sec = crippling_normal(sec);
 
 % =========================================================================
 %  FLAMBAGEM GLOBAL (Elástica e Plástica)
@@ -81,3 +88,4 @@ T = table((1:size(sec.malha.panels,1))', sec.R.R_c, sec.R.R_b, ...
     'VariableNames', {'Painel','R_c','R_b','R_s','MS'});
 disp(T);
 disp('Processo concluído com sucesso!');
+
