@@ -48,7 +48,7 @@ end
     A_total = A_reforcadores + sum(A_elem);
 % 3. Integração na estrutura global (sec)
 sec.crippling.Fcc_elem   = Fcc_elem * KSI2MPA;
-sec.crippling.Fcc_perfil = sum(A_elem.*Fcc_elem)/ A_total; % Fcc total [MPa]
+sec.crippling.Fcc_perfil = (sum(A_elem.*Fcc_elem)/ A_total)*KSI2MPA; % Fcc total [MPa]
 sec.MS.crippling_normal = sec.crippling.Fcc_perfil/(N/A) -1;
 end
 
