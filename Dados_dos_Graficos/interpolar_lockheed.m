@@ -173,16 +173,5 @@ if true_or_false == true
         'LineWidth', 1.1, ...
         'Box', 'on');
 end
-%% ============================================================
-% MOSTRAR RESULTADO NO COMMAND WINDOW
-% ============================================================
-
-fprintf('\n============================================\n');
-fprintf('        INTERPOLAÇÃO LOCKHEED\n');
-fprintf('============================================\n');
-fprintf('Série:       %s\n', nomeSerie);
-fprintf('b/t:         %.6f\n', bt);
-fprintf('Fcc:         %.6f ksi\n', Fcc);
-fprintf('============================================\n\n');
 
 end
