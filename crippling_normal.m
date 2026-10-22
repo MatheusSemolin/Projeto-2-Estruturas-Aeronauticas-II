@@ -7,7 +7,7 @@ function [sec] = crippling_normal(sec)
 
 criterio_juncao = 'apoiado';
 KSI2MPA = 6.89476;
-% 1. Extração de propriedades e malha
+% Extração de propriedades e malha
 nodes  = sec.malha.nodes;
 panels = sec.malha.panels;
 np     = size(panels, 1);
@@ -17,7 +17,7 @@ A_elem         = zeros(np, 1);
 Fcc_elem       = zeros(np, 1);
 tipos_lockheed = zeros(np, 1);
 
-% 2. Loop por painel (Trecho do seu amigo adaptado)
+% Loop por painel
 for p = 1:np
     n1 = panels(p,1);  
     n2 = panels(p,2);  
@@ -46,7 +46,7 @@ end
     
     A_reforcadores = sum(nodes(:,4));
     A_total = A_reforcadores + sum(A_elem);
-% 3. Integração na estrutura global (sec)
+% Integração na estrutura global (sec)
 sec.crippling.Fcc_elem   = Fcc_elem * KSI2MPA;
 sec.crippling.Fcc_perfil = (sum(A_elem.*Fcc_elem)/ A_total)*KSI2MPA; % Fcc total [MPa]
 sec.MS.crippling_normal = sec.crippling.Fcc_perfil/(N/A) -1;

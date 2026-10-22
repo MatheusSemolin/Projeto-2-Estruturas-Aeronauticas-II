@@ -23,46 +23,136 @@ c = sec.propriedades.c;
 A = sec.propriedades.A;
 N = sec.cargas.N;
 n = sec.propriedades.n;         
-F_07 = sec.propriedades.F_07;   
+F_07 = sec.propriedades.F_07;  
+sigma_y = sec.propriedades.sigma_y;
+offset = 0.002;
 %%%%%%%%%%%%%%% Flambagem Global Elástica %%%%%%%%%%%%%%
 Pcr = (pi^2 * E * I_eta) / (c * L_viga)^2;
-fprintf('1. Flambagem Global Elástica (%s) \n', sec.nome)
-if  Pcr/A > sec.propriedades.sigma_E
-    fprintf("Flambagem global Elástica não ocorre\n")
-end
+if  Pcr/A < sec.propriedades.sigma_E
+fprintf('Flambagem Global Elástica (%s) \n', sec.nome)
+
 sec.Cargas_Criticas.Global_elastica = Pcr;
 MS_global_elastica = (Pcr/N) - 1;
 sec.MS.Global_elastica = MS_global_elastica;
 
 fprintf('   - Carga Crítica (Pcr)     : %.2f N\n', Pcr);
 fprintf('   - Margem de Segurança (MS): %.2f\n', MS_global_elastica);
+end
 %%%%%%%%%%%%%%% Flambagem Global Plástica %%%%%%%%%%%%%%
-syms sigma_sym
 
-k = (3/7) *(E/F_07)^(n-1); % Conversão realizada com base na equação de Ramberg-Osgood do livro do Bruhn e das fórmulas anotadas em sala.
+%%%%%%%%%% Ramberg Osgood usando o método do offset %%%%%%%%%%%%%%%%%
 
-E_t = ((1/E)+ (n*k*sigma_sym^(n-1))/E^n)^-1;
-f_sym = sigma_sym*A - (E_t*I_eta*pi^2)/(c*L_viga)^2;
-df_sym = diff(f_sym,sigma_sym);
 
-f_num = matlabFunction(f_sym);
-df_num = matlabFunction(df_sym);
+%%%%%%%%%%%%%%% Flambagem Global Inelástica %%%%%%%%%%%%%%
+if  Pcr/A > sec.propriedades.sigma_E
 
-sigma_cr = sec.propriedades.sigma_E;
-for i = 1:100
-    
-    if abs(f_num(sigma_cr)) < 1e-6
-        break;
-    end
-    sigma_cr = sigma_cr - f_num(sigma_cr)/df_num(sigma_cr);
+n = log((3*F_07)/(7*E*offset)) / ...
+    log(F_07/sigma_y);    
+% Modulo tangente pela equacao de offset
+Et = @(sigma) 1 ./ ( ...
+    1/E + ...
+    (offset*n/sigma_y)*(sigma/sigma_y).^(n-1));
+
+% Equacao de flambagem inelastica
+f = @(sigma) sigma*A - ...
+    pi^2*I_eta*Et(sigma)/(c*L_viga)^2;
+
+% Tensão crítica elástica de Euler
+sigma_euler = Pcr/A;
+
+% Solucao numerica
+sigma_cr = fzero(f, [eps, sigma_euler]);
+
+% Carga critica inelastica
+Pcr_plastica = sigma_cr*A;
+
+% Margem de seguranca
+MS_global_plastica = Pcr_plastica/N - 1;
+
+% Armazenamento
+sec.Cargas_Criticas.Global_plastica = Pcr_plastica;
+
+sec.MS.Global_plastica = MS_global_plastica;
+
+% Resultados
+fprintf('\nFlambagem Global Inelastica (%s)\n', sec.nome);
+fprintf('Expoente n        : %.4f\n', n);
+fprintf('Modulo elastico   : %.2f MPa\n', E);
+fprintf('Modulo tangente   : %.2f MPa\n', Et(sigma_cr));
+fprintf('Tensao critica    : %.2f MPa\n', sigma_cr);
+fprintf('Carga critica     : %.2f N\n', Pcr_plastica);
+fprintf('Margem seguranca  : %.4f\n', MS_global_plastica);
 end
 
-Pcr_plastica = sigma_cr * A;
-MS_global_plastica = (Pcr_plastica / N) - 1;
-sec.MS.Global_plastica = MS_global_plastica;
-sec.Cargas_Criticas.Global_plastica = Pcr_plastica;
-fprintf('\n2. Flambagem Global Plástica (%s) \n', sec.nome);
-    fprintf('   - Carga Crítica (Pcr)     : %.2f N\n', Pcr_plastica);
-    fprintf('   - Margem de Segurança (MS): %.2f\n', MS_global_plastica);
-    fprintf('============================================================\n\n');
+
+%%%%%%%%%%%%%%% Flambagem Induzida por Crippling %%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%% Largura Minima Efetiva das Flanges %%%%%%%%%%%%%%%
+
+nodes = sec.malha.nodes;
+panels = sec.malha.panels;
+
+% Identificacao das flanges pelos nos das extremidades livres
+nos_livres = [1, 5, 6];
+
+% Inicializacao
+w_min = zeros(length(nos_livres), 1);
+
+for i = 1:length(nos_livres)
+
+    no = nos_livres(i);
+
+    % Encontra o indice do no
+    idx = find(nodes(:,1) == no, 1);
+
+    % Tensao de flexao na extremidade livre [MPa]
+    fb = sec.resultados.Sigma_nodes(idx);
+
+    % Encontra o painel conectado ao no livre
+    p = find(panels(:,1) == no | panels(:,2) == no, 1);
+
+    % Espessura da flange [mm]
+    t = panels(p,3);
+    if sec.MS.local(p) <0
+    
+        if fb < 0
+
+            % Modulo da tensao compressiva
+            f = abs(fb);
+
+            % Largura minima efetiva [mm]
+            w_min(i) = 0.64 * sqrt(E/(2*f)) * t;
+
+            fprintf('\nFlange com extremidade no no %d\n', no);
+            fprintf('Tensao de flexao: %.2f MPa\n', fb);
+            fprintf('w_min: %.2f mm\n', w_min(i));
+
+        else
+
+            fprintf('\nFlange com extremidade no no %d: tracionada\n', no);
+
+     
+        end
+
+    end
+end
+
+% Armazena os resultados
+sec.crippling.nos_livres = nos_livres;
+sec.crippling.w_min = w_min;
+
+Fcc = sec.crippling.Fcc_perfil;
+I_eta_crippling = sec.propriedades.I_eta_crippling;
+A_crippling = sec.propriedades.A_crippling;
+Pcr_crippling_induzido = Fcc * (1 - (Fcc*(c*L_viga)^2)/(pi^2*E*I_eta_crippling)) * A_crippling;
+MS_crippling_induzido = Pcr_crippling_induzido/N - 1;
+sec.MS.crippling_induzido = MS_crippling_induzido;
+
+
+sec.Cargas_Criticas.Pcr_crippling_induzido = Pcr_crippling_induzido;
+
+
+
+
+
 end

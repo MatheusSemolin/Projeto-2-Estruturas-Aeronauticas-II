@@ -9,7 +9,7 @@ sec.malha.nodes = [
     4, 41, 51.2, 2*14.536;
     5, 10, 51.2, 0;
     6, 72, 51.2, 0
-];
+    ];
 
 % Espessuras das chapas
 t1 = 0.8;
@@ -22,7 +22,7 @@ sec.malha.panels = [
     3,  4,  t2; 
     4,  5,  t1; 
     4,  6,  t1;
-];
+    ];
 
 % =========================================================================
 % Cargas
@@ -50,9 +50,13 @@ sec.propriedades.v = 0.33; % Coeficiente de Poisson
 sec.propriedades.L_viga    = 320;         % Comprimento destravado da coluna [mm]
 sec.propriedades.c         = 2.0;         % Fator de comprimento efetivo (c) [Adimensional]
 sec.propriedades.sigma_E   = 370;         % Tensão limite elástica do material [MPa]
-sec.propriedades.sigma_y   = 370;         % Tensão limite elástica do material [MPa]
+sec.propriedades.sigma_y   = 468.843;     % Tensão de escoamento à compresão [MPa]
 sec.propriedades.n         = 9.2;         % Expoente de Ramberg-Osgood
 sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
+
+
+sec.propriedades.A_crippling = 223.05;
+sec.propriedades.I_eta_crippling = 21568.27;
 
 % =========================================================================
 % Calculo de Tensões
@@ -69,14 +73,6 @@ sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
 sec = crippling_normal(sec);
 
 % =========================================================================
-%  FLAMBAGEM GLOBAL (Elástica e Plástica)
-% =========================================================================
-fprintf('\n Análise de flambagem global \n'); 
-[sec] = flambagem_global(sec);
-
-disp('---------------------------------------------------------');
-
-% =========================================================================
 %  FLAMBAGEM LOCAL
 % =========================================================================
 fprintf('\n Análise de flambagem local \n'); 
@@ -88,4 +84,13 @@ T = table((1:size(sec.malha.panels,1))', sec.R.R_c, sec.R.R_b, ...
     'VariableNames', {'Painel','R_c','R_b','R_s','MS'});
 disp(T);
 disp('Processo concluído com sucesso!');
+
+% =========================================================================
+%  FLAMBAGEM GLOBAL (Elástica e Plástica)
+% =========================================================================
+fprintf('\n Análise de flambagem global \n'); 
+[sec] = flambagem_global(sec);
+
+disp('---------------------------------------------------------');
+
 
