@@ -26,6 +26,7 @@ n = sec.propriedades.n;
 F_07 = sec.propriedades.F_07;  
 sigma_y = sec.propriedades.sigma_y;
 offset = 0.002;
+
 %%%%%%%%%%%%%%% Flambagem Global Elástica %%%%%%%%%%%%%%
 Pcr = (pi^2 * E * I_eta) / (c * L_viga)^2;
 if  Pcr/A < sec.propriedades.sigma_E
@@ -42,10 +43,9 @@ end
 
 %%%%%%%%%% Ramberg Osgood usando o método do offset %%%%%%%%%%%%%%%%%
 
-
 %%%%%%%%%%%%%%% Flambagem Global Inelástica %%%%%%%%%%%%%%
 if  Pcr/A > sec.propriedades.sigma_E
-
+fprintf('Flambagem Global Plástica: Não ocorre \n')
 n = log((3*F_07)/(7*E*offset)) / ...
     log(F_07/sigma_y);    
 % Modulo tangente pela equacao de offset
@@ -75,13 +75,15 @@ sec.Cargas_Criticas.Global_plastica = Pcr_plastica;
 sec.MS.Global_plastica = MS_global_plastica;
 
 % Resultados
-fprintf('\nFlambagem Global Inelastica (%s)\n', sec.nome);
+fprintf('\nFlambagem Global Plástica (%s)\n', sec.nome);
 fprintf('Expoente n        : %.4f\n', n);
-fprintf('Modulo elastico   : %.2f MPa\n', E);
-fprintf('Modulo tangente   : %.2f MPa\n', Et(sigma_cr));
+fprintf('Modulo de elasticidade   : %.2f MPa\n', E);
+fprintf('Modulo de elasticidade tangente   : %.2f MPa\n', Et(sigma_cr));
 fprintf('Tensao critica    : %.2f MPa\n', sigma_cr);
 fprintf('Carga critica     : %.2f N\n', Pcr_plastica);
 fprintf('Margem seguranca  : %.4f\n', MS_global_plastica);
+else
+    sec.MS.Global_plastica = NaN;
 end
 
 
