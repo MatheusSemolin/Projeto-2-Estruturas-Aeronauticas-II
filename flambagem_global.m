@@ -93,7 +93,9 @@ nodes = sec.malha.nodes;
 panels = sec.malha.panels;
 
 % Identificacao das flanges pelos nos das extremidades livres
-nos_livres = [1, 5, 6];
+nos_totais = [panels(:,1);panels(:,2)];
+[frequencia, nos_distintos] = groupcounts(nos_totais);
+nos_livres = nos_distintos(frequencia == 1);
 
 % Inicializacao
 w_min = zeros(length(nos_livres), 1);
