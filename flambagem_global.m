@@ -38,6 +38,10 @@ sec.MS.Global_elastica = MS_global_elastica;
 
 fprintf('   - Carga Crítica (Pcr)     : %.2f N\n', Pcr);
 fprintf('   - Margem de Segurança (MS): %.2f\n', MS_global_elastica);
+else
+    sec.Cargas_Criticas.Global_elastica = NaN;
+    sec.MS.Global_elastica = NaN;
+    fprintf('Flambagem Global Elástica: Não ocorre (%s)\n', sec.nome);
 end
 %%%%%%%%%%%%%%% Flambagem Global Plástica %%%%%%%%%%%%%%
 
@@ -45,7 +49,6 @@ end
 
 %%%%%%%%%%%%%%% Flambagem Global Inelástica %%%%%%%%%%%%%%
 if  Pcr/A > sec.propriedades.sigma_E
-fprintf('Flambagem Global Plástica: Não ocorre \n')
 n = log((3*F_07)/(7*E*offset)) / ...
     log(F_07/sigma_y);    
 % Modulo tangente pela equacao de offset
