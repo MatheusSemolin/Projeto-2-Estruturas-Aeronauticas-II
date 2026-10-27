@@ -13,8 +13,11 @@ KSI2MPA = 6.89476;
 epslon_0 = 0.002;
 FC_y = sec.propriedades.sigma_y;
 E = sec.propriedades.E;
-K = 0.675;                          % <---- Trocar pelo valor do Léo
 t_sk = 0.80;                        % <---- em mm
+
+% Coefientes da IDT
+alpha = 0.675;                          % <---- Trocar pelo valor do Léo
+k = 0.675;                              % <---- Trocar pelo valor do Léo
 
 % Coeficiente C (em ksi !!!)
 C = (0.01 * FC_y / KSI2MPA) / (5.88 * sqrt(FC_y / E) + epslon_0);
@@ -58,7 +61,7 @@ end
 
 for i = 1:n_panels
 
-    Sigma_sr_MPa = sec.resultados.sigma_s(i);       % <---- verificar se a origem dos dados está correta
+    Sigma_sr_MPa = sec.longeron_IDT.F_IDT;          % <---- verificar se a origem dos dados está correta
                                                     %       e se as  tensões estão em MPa
     R_CF(i) = Sigma_sr_MPa / F_ccf_MPa(i);          % <---- em MPA
 
