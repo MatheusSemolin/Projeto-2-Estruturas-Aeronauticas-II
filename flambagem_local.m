@@ -59,14 +59,14 @@ R_b = abs(sigma_b./sigma_cr_matriz(:,2));
 R_s = abs(sigma_s./sigma_cr_matriz(:,3));
 
 
-% Margens de Segurança MS (perguntar pro Murilo)
-% mask_b = (R_b > 0.1);
-% mask_c = (R_c > 0.1);
-% mask_s = (R_s > 0.1);
+ % Margens de Segurança MS 
+ mask_b = (R_b > 0.1);
+ mask_c = (R_c > 0.1);
+ mask_s = (R_s > 0.1);
 
- mask_b = ~isnan(R_b);
- mask_c = ~isnan(R_c);
- mask_s = ~isnan(R_s);
+ % mask_b = ~isnan(R_b);
+ % mask_c = ~isnan(R_c);
+ % mask_s = ~isnan(R_s);
 
 caso_bc = mask_b & mask_c & ~mask_s;
 caso_cs = ~mask_b & mask_c & mask_s;
