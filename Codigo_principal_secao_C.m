@@ -1,4 +1,4 @@
-%% SCRIPT PRINCIPAL - ANÁLISE DA SEÇÃO J
+%% SCRIPT PRINCIPAL - ANÁLISE DA SEÇÃO C
 clc; clear variables; close all;
 
 % Nós: [ID, x, y, Area_do_Boom]
@@ -11,7 +11,7 @@ sec.malha.nodes = [
     ];
 
 % Espessuras das chapas
-t1 = 3;
+t1 = 3; % [mm]
 
 % Painéis: [ID_Nó_Origem, ID_Nó_Destino, Espessura_da_Chapa]
 sec.malha.panels = [
@@ -35,13 +35,13 @@ sec.cargas.N  = 37.6e3;  %N.mm     % Carga axial atuante [N]
 % Propriedades
 % =========================================================
 sec.nome      = 'Perfil Caverna C';
-sec.propriedades.Ixx = 701842.54;
-sec.propriedades.Iyy = 306051.83;
-sec.propriedades.Ixy = 18737.66;
-sec.propriedades.centroide = [40.184, 41.309];
-sec.propriedades.centro_de_cisalhamento = [85.79, 41.97];
-sec.propriedades.I_eta     = 305166.72 ;      % Menor momento de inércia principal [mm^4]
-sec.propriedades.A         = 687.59;         % Área da secção transversal [mm^2]
+sec.propriedades.Ixx = 701139.04;
+sec.propriedades.Iyy = 305215.75;
+sec.propriedades.Ixy = 18706.97;
+sec.propriedades.centroide = [40.215, 41.310];
+sec.propriedades.centro_de_cisalhamento = [85.75, 41.97];
+sec.propriedades.I_eta     = 304333.83;      % Menor momento de inércia principal [mm^4]
+sec.propriedades.A         = 687.09;         % Área da secção transversal [mm^2]
 sec.propriedades.E         = 72395;       % Módulo de Elasticidade [MPa]
 sec.propriedades.v = 0.33; % Coeficiente de Poisson
 sec.propriedades.L_viga    = 320;         % Comprimento destravado da coluna [mm]
@@ -50,9 +50,8 @@ sec.propriedades.sigma_E   = 370;         % Tensão limite elástica do material
 sec.propriedades.sigma_y   = 468.843;     % Tensão de escoamento à compresão [MPa]
 sec.propriedades.n         = 9.2;         % Expoente de Ramberg-Osgood
 sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
-
-sec.propriedades.A_crippling = 223.05;
-sec.propriedades.I_eta_crippling = 21568.27;
+sec.propriedades.A_crippling = 223.05; %% TROCAR
+sec.propriedades.I_eta_crippling = 21568.27; %% TROCAR
 
 fprintf('\n====================================================================\n');
 fprintf(' ANÁLISE: %s\n', sec.nome);
