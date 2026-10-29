@@ -1,13 +1,13 @@
 % =========================================================================
-% SCRIPT PRINCIPAL: MARGENS DE SEGURANCA A TENSAO SEMI-DIAGONAL (CORRIGIDO)
+% SCRIPT PRINCIPAL: MARGENS DE SEGURANCA A TENSAO SEMI-DIAGONAL (VERSAO FINAL)
 % =========================================================================
 clear; clc;
 
 %% 1. DADOS CONSTANTES DO PAINEL
 tau_apl = 72;        % Tensao de cisalhamento aplicada [MPa]
 R = 2000;            % Raio de curvatura do painel [mm]
-d = 320;             % Distancia entre cavernas (Seccao C) [mm]
-h = 185;             % Distancia entre longerons (Seccoes J e Z) [mm]
+d = 320;             % Distancia longitudinal entre cavernas [mm]
+h = 185;             % Distancia transversal entre longerons [mm]
 t = 0.80;            % Espessura da chapa do painel [mm]
 E = 71000;           % Modulo de elasticidade [MPa] 
 nu = 0.33;           % Coeficiente de Poisson 
@@ -23,69 +23,79 @@ N_cargas  = [1560, 1560, 37600];    % Cargas Axiais de Compressao (N) [N]
 Mt_cargas = [85000, 85000, 115000]; % Momentos Fletores Tangenciais (Mt) [N.mm]
 Mr_cargas = [2400, 2400, 37000];    % Momentos Fletores Radiais (Mr) [N.mm]
 
-% --- DADOS GEOMETRICOS (ATUALIZADOS COM A TABELA) ---
+% --- DADOS GEOMETRICOS ---
 n_ref = [1, 1, 2];             % 1 J, 1 Z, 2 Cavernas
-Area  = [239.09, 135.73, 687.09]; % Areas extraidas da tabela [mm^2]
+Area  = [239.09, 135.73, 687.09]; % Areas [mm^2]
 I_eta = [5000, 5000, 8000];    % [INSERIR] Inercia do centroide [mm^4]
-e_exc = [15, 12, 20];          % [INSERIR] Excentricidade (Esperando o Léo) [mm]
+e_exc = [15, 12, 20];          % [INSERIR] Excentricidade [mm]
 y_max = [10, 10, 15];          % [INSERIR] Distancia do centroide a borda [mm]
 t_bar = [1, 1, 1.5];           % [INSERIR] Espessura media do reforcador [mm]
 
-% --- DADOS DE FLAMBAGEM (ATUALIZADOS COM A TABELA) ---
-s_adm       = [235.4272, 153.3154, 0]; % Tensao Critica Global da tabela [MPa]
-F_cc_cr     = [0, 0, 412.577];         % Tensao Critica de Crippling da tabela (Caverna) [MPa]
+% --- DADOS DE FLAMBAGEM ---
+s_adm       = [235.4272, 153.3154, 0]; % Tensao Critica Global [MPa]
+F_cc_cr     = [0, 0, 412.577];         % Tensao Critica de Crippling (Caverna) [MPa]
+s_c_cr_0    = [200, 200, 0];   % [INSERIR] Tensao critica compressao estado puro [MPa]
+s_s_cr_0    = [150, 150, 0];   % [INSERIR] Tensao critica cisalhamento estado puro [MPa]
 
-s_c_cr_0    = [200, 200, 0];   % [INSERIR] Tensao critica compressao (estado puro) [MPa]
-s_s_cr_0    = [150, 150, 0];   % [INSERIR] Tensao critica cisalhamento (estado puro) [MPa]
+%% 3. CALCULO DO ANGULO GLOBAL (ALPHA) DO PAINEL
+% Para calcular o comportamento da chapa, usamos propriedades representativas do painel.
+% Média dos Longerons (Rigidez Longitudinal)
+A_long_med = mean(Area(1:2));
+I_long_med = mean(I_eta(1:2));
+e_long_med = mean(e_exc(1:2));
+rho_long = sqrt(I_long_med / A_long_med);
+Ase = A_long_med / (1 + (e_long_med^2 / rho_long^2)); % Area efetiva longitudinal
 
-%% 3. CALCULO ITERATIVO E MARGENS DE SEGURANCA
+% Caverna (Rigidez Transversal)
+A_cav = Area(3);
+I_cav = I_eta(3);
+e_cav = e_exc(3);
+rho_cav = sqrt(I_cav / A_cav);
+Are = A_cav / (1 + (e_cav^2 / rho_cav^2)); % Area efetiva transversal
+
+% Ciclo iterativo (Unico para todo o painel)
+alpha = pi/4; K = 0.5; erro = 1; tol = 1e-4; iter = 0; max_iter = 500;
+c_linha = max(d/h, h/d); 
+
+while erro > tol && iter < max_iter
+    iter = iter + 1;
+    a_ant = alpha; K_ant = K;
+    he_h = 0.5 * (1 - K); de_d = 0.5 * (1 - K);
+    
+    % Deformacoes
+    eps_sk = ((2*K / sin(2*alpha)) + (1-K)*(1-nu)*sin(2*alpha)) * (tau_apl / E);
+    eps_s  = (1 / (tan(alpha) * ((Ase / (h*t)) + he_h))) * (tau_apl / E);
+    eps_r  = (tan(alpha) / ((Are / (d*t)) + de_d)) * (tau_apl / E);
+    
+    % Curvatura
+    eps_ast = (1/8) * (d^2 / R^2) * (tan(alpha))^2; 
+    
+    % Recalculo
+    tan2_alpha = (eps_sk + eps_s) / (eps_sk + eps_r + eps_ast);
+    alpha = atan(sqrt(tan2_alpha));
+    termo_K = (0.5 + 300*(t/R)*c_linha) * log10(tau_apl / tau_cr);
+    K = tanh(termo_K);
+    
+    erro = max(abs(alpha - a_ant), abs(K - K_ant));
+end
+
 fprintf('======================================================\n');
-fprintf(' RESULTADOS DAS MARGENS DE SEGURANCA (TSD)\n');
+fprintf(' DADOS GLOBAIS DO PAINEL (TSD)\n');
+fprintf('======================================================\n');
+fprintf('Iteracoes : %d \nFator K   : %.4f \nAngulo    : %.2f graus\n\n', iter, K, rad2deg(alpha));
+
+%% 4. AVALIACAO DOS REFORCADORES INDIVIDUAIS
+fprintf('======================================================\n');
+fprintf(' RESULTADOS DAS MARGENS DE SEGURANCA\n');
 fprintf('======================================================\n\n');
 
 for i = 1:3
-    % 3.1. Extracao dos dados para a seccao atual (i)
     nome = nomes(i); is_long = is_longeron(i);
     A = Area(i); I = I_eta(i); e = e_exc(i);
     N = N_cargas(i); Mt = Mt_cargas(i); Mr = Mr_cargas(i);
     n = n_ref(i); ymax = y_max(i); tb = t_bar(i);
     
-    % 3.2. Correcao de Excentricidade (Area Efetiva)
-    rho = sqrt(I / A);            
-    Ae = A / (1 + (e^2 / rho^2)); 
-    if is_long
-        Ase = Ae; Are = A;
-    else
-        Ase = A; Are = Ae;
-    end
-    
-    % 3.3. Ciclo Iterativo para K e alpha
-    alpha = pi/4; K = 0.5; erro = 1; tol = 1e-4; iter = 0; max_iter = 500;
-    c_linha = max(d/h, h/d); 
-    
-    while erro > tol && iter < max_iter
-        iter = iter + 1;
-        a_ant = alpha; K_ant = K;
-        he_h = 0.5 * (1 - K); de_d = 0.5 * (1 - K);
-        
-        % Deformacoes
-        eps_sk = ((2*K / sin(2*alpha)) + (1-K)*(1-nu)*sin(2*alpha)) * (tau_apl / E);
-        eps_s  = (1 / (tan(alpha) * ((Ase / (h*t)) + he_h))) * (tau_apl / E);
-        eps_r  = (tan(alpha) / ((Are / (d*t)) + de_d)) * (tau_apl / E);
-        
-        % Curvatura
-        eps_ast = (1/8) * (d^2 / R^2) * (tan(alpha))^2; 
-        
-        % Recalculo
-        tan2_alpha = (eps_sk + eps_s) / (eps_sk + eps_r + eps_ast);
-        alpha = atan(sqrt(tan2_alpha));
-        termo_K = (0.5 + 300*(t/R)*c_linha) * log10(tau_apl / tau_cr);
-        K = tanh(termo_K);
-        
-        erro = max(abs(alpha - a_ant), abs(K - K_ant));
-    end
-    
-    % 3.4. Tensao Induzida pela TSD e Flexao
+    % Tensao Induzida pela TSD e Flexao
     if is_long
         sigma_induzida = tau_apl * ((h*t)/A) * (1/tan(alpha)); 
     else
@@ -95,9 +105,7 @@ for i = 1:3
     M_total = Mt + Mr; 
     sigma_flexao = (M_total * ymax) / I;
     
-    % 3.5. Calculo da Margem de Seguranca (Retos vs Curvos)
     fprintf('--- %s ---\n', nome);
-    fprintf('Iteracoes: %d | K: %.4f | Alpha: %.2f graus\n', iter, K, rad2deg(alpha));
     
     if is_long == 1 
         % Reforcadores Retos (Longerons) usando Curva de Interacao
@@ -106,28 +114,31 @@ for i = 1:3
         
         R_tau = -(param_A / (2*param_B)) + sqrt((param_A^2 / (4*param_B^2)) + 1);
         R_c = (param_A / param_B) * R_tau;
-        
         sigma_c_cr = R_c * s_c_cr_0(i);
         
+        % Inclusao da Area Colaborante (Pele + Reforcador)
+        Area_colaborante = (n * A) + (h * t);
+        P_axial = N; 
+        
         % Fator D e Tensao de Compressao Equivalente
-        P_axial = N; % Carga axial aplicada
         D = 0.445 * ((h*t)/(n * A)) * R_c * sqrt(sigma_c_cr); 
-        termo_raiz = max(0, D^2 - (P_axial / (n * A)));
-        sigma_c_bar = (P_axial / (n * A)) + 2*D*sqrt(termo_raiz);
+        termo_raiz = max(0, D^2 - (P_axial / Area_colaborante));
+        sigma_c_bar = (P_axial / Area_colaborante) + 2*D*sqrt(termo_raiz);
         
         sigma_apl = sigma_c_bar + sigma_induzida + sigma_flexao; 
         MS = (s_adm(i) / sigma_apl) - 1; 
         
         fprintf('Tensao TSD Induzida : %8.2f MPa\n', sigma_induzida);
+        fprintf('Tensao Flexao       : %8.2f MPa\n', sigma_flexao);
         fprintf('Tensao Comp. Equiv. : %8.2f MPa\n', sigma_c_bar);
         fprintf('Tensao Aplicada     : %8.2f MPa\n', sigma_apl);
         
     else
         % Reforcadores Curvos (Cavernas) usando Crippling Forcado
-        sigma_c_aplicada = (N / A) + sigma_flexao; % Compressao + Flexao
+        sigma_c_aplicada = (N / A) + sigma_flexao; 
         
         % Parametro C do material
-        eps_0 = 0.002; % Deformacao de escoamento padrao
+        eps_0 = 0.002; 
         C_mat = E / (5.88 * sqrt((sigma_y/E) + eps_0));
         
         % Tensao Admissivel ao Crippling Forcado
@@ -139,6 +150,7 @@ for i = 1:3
         MS = (1 / (R_cu + R_cf)) - 1;
         
         fprintf('Tensao Compressao   : %8.2f MPa\n', sigma_c_aplicada);
+        fprintf('Tensao TSD Induzida : %8.2f MPa\n', sigma_induzida);
         fprintf('Tensao Crippling (F): %8.2f MPa\n', F_cc_f);
         fprintf('Razao R_cu          : %8.4f\n', R_cu);
         fprintf('Razao R_cf          : %8.4f\n', R_cf);
