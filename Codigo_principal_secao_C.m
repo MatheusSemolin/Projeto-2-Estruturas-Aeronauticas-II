@@ -50,8 +50,9 @@ sec.propriedades.sigma_E   = 370;         % Tensão limite elástica do material
 sec.propriedades.sigma_y   = 468.843;     % Tensão de escoamento à compresão [MPa]
 sec.propriedades.n         = 9.2;         % Expoente de Ramberg-Osgood
 sec.propriedades.F_07      = 482;         % MPa Tensão de referência [MPa]
-sec.propriedades.A_crippling = 223.05; %% TROCAR
-sec.propriedades.I_eta_crippling = 21568.27; %% TROCAR
+
+sec.propriedades.A_crippling = sec.propriedades.A; %% Não tem flambagem local então não tem w min
+sec.propriedades.I_eta_crippling = sec.propriedades.I_eta; %% Não tem flambagem local então não tem w min
 
 fprintf('\n====================================================================\n');
 fprintf(' ANÁLISE: %s\n', sec.nome);
