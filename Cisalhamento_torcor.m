@@ -10,8 +10,8 @@ function [sec] = Cisalhamento_torcor(sec)
 %   sec.panels     - Matriz de painéis no formato [ID_Origem, ID_Destino, Espessura]
 %   sec.cargas.Mz         - Momento torsor aplicado
 %   sec.propriedades.centroide  - Coordenadas do centróide (xc, yc)
-%   sec.propriedades.centro_de_cisalhamento - Coordenadas (x_se, y_se). 
-%                    OBS: Os valores devem estar no sistema global (x,y), 
+%   sec.propriedades.centro_de_cisalhamento - Coordenadas (x_se, y_se).
+%                    OBS: Os valores devem estar no sistema global (x,y),
 %                    e NÃO em relação ao centróide.
 %
 %   Saídas:
@@ -38,14 +38,14 @@ for p = 1:P
     y_triangulo = [nodes(n1,3), nodes(n2,3),y_se];
 
     Matriz_Triangulo = [x_triangulo',y_triangulo',ones(3,1)];
-    
 
-    sentido(p) = sign(det(Matriz_Triangulo));  
+
+    sentido(p) = sign(det(Matriz_Triangulo));
     A_projetada = A_projetada + 0.5 * abs(det(Matriz_Triangulo));
 
     x_fechado = [x_triangulo, nodes(n1,2)];
     y_fechado = [y_triangulo, nodes(n1,3)];
-    
+
     fill(x_triangulo, y_triangulo, 'm', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
     plot(x_fechado, y_fechado, 'm-', 'LineWidth', 1.5);
 
@@ -73,9 +73,9 @@ max_tau = max(abs(sec.resultados.tau_torcao(1:P)));
 max_dim = max(max(nodes(:,2))-min(nodes(:,2)), max(nodes(:,3))-min(nodes(:,3)));
 
 if max_tau == 0
-    escala = (0.2 * max_dim); 
-else 
-    escala = (0.2 * max_dim) / max_tau; 
+    escala = (0.2 * max_dim);
+else
+    escala = (0.2 * max_dim) / max_tau;
 end
 
 xc = sec.propriedades.centroide(1);
@@ -85,7 +85,7 @@ yc = sec.propriedades.centroide(2);
 
 % Desenha a estrutura base
 subplot(1,2,2)
-hold on; grid on; 
+hold on; grid on; axis equal;
 title('Tensão Cisalhante Torcional')
 for p = 1:P
     n1 = find(nodes(:,1) == panels(p,1));
@@ -98,10 +98,14 @@ for p = 1:P
 end
 scatter(nodes(:,2), nodes(:,3), 40, 'k', 'filled');
 
+% Para legenda
+h_pos = [];
+h_neg = [];
+
 % Plota os vetores e o envelope
 for p = 1:P
-    n1 = find(nodes(:,1) == panels(p,1)); 
-    n2 = find(nodes(:,1) == panels(p,2)); 
+    n1 = find(nodes(:,1) == panels(p,1));
+    n2 = find(nodes(:,1) == panels(p,2));
 
     x1 = nodes(n1,2); y1 = nodes(n1,3);
     x2 = nodes(n2,2); y2 = nodes(n2,3);
@@ -109,7 +113,7 @@ for p = 1:P
     dx = x2 - x1; dy = y2 - y1;
     L = sqrt(dx^2 + dy^2);
 
-    nx = -dy / L; 
+    nx = -dy / L;
     ny =  dx / L;
 
     % Garante que aponta para fora
@@ -124,37 +128,52 @@ for p = 1:P
     s_vals = linspace(0, L, num_pts);
 
     tau_p = sec.resultados.tau_torcao(p);
-    tau_vals = tau_p * ones(size(s_vals)); 
+    tau_vals = tau_p * ones(size(s_vals));
 
     x_base = x1 + (dx/L) * s_vals;
     y_base = y1 + (dy/L) * s_vals;
 
+    % Componentes U e V dos vetores
     U = tau_vals * escala * nx;
     V = tau_vals * escala * ny;
-
-    idx_pos = tau_vals >= 0;
-    idx_neg = tau_vals < 0;
-
-    if any(idx_pos)
-        quiver(x_base(idx_pos), y_base(idx_pos), U(idx_pos), V(idx_pos), 0, ...
-            'Color', 'b', 'ShowArrowHead', 'off', 'LineWidth', 1.2);
-    end
-    if any(idx_neg)
-        quiver(x_base(idx_neg), y_base(idx_neg), U(idx_neg), V(idx_neg), 0, ...
-            'Color', 'r', 'ShowArrowHead', 'off', 'LineWidth', 1.2);
-    end
 
     x_env = x_base + U;
     y_env = y_base + V;
 
+    x_poly = [x_base, fliplr(x_env)];
+    y_poly = [y_base, fliplr(y_env)];
+
+    % Define a cor com base no sinal
     if tau_p >= 0
-        plot(x_env, y_env, 'b', 'LineWidth', 1.5);
-        plot([x_base(1), x_env(1)], [y_base(1), y_env(1)], 'b', 'LineWidth', 1.5);
-        plot([x_base(end), x_env(end)], [y_base(end), y_env(end)], 'b', 'LineWidth', 1.5);
+        cor = 'b';
     else
-        plot(x_env, y_env, 'r', 'LineWidth', 1.5);
-        plot([x_base(1), x_env(1)], [y_base(1), y_env(1)], 'r', 'LineWidth', 1.5);
-        plot([x_base(end), x_env(end)], [y_base(end), y_env(end)], 'r', 'LineWidth', 1.5);
+        cor = 'r';
     end
+
+    % 1. Fundo semitransparente
+    h_fill = fill(x_poly, y_poly, cor, 'FaceAlpha', 0.3, 'EdgeColor', cor, 'HandleVisibility', 'off');
+
+    % Para legenda
+    if tau_p >= 0 && isempty(h_pos)
+        h_pos = h_fill;
+    elseif tau_p < 0 && isempty(h_neg)
+        h_neg = h_fill;
+    end
+
+    % 2. Riscos internos (hachura) sobre o fundo
+    quiver(x_base, y_base, U, V, 0, 'Color', cor, 'ShowArrowHead', 'off', 'LineWidth', 1.2, 'HandleVisibility', 'off');
+
+    % 3. Contornos do diagrama
+    plot(x_env, y_env, 'Color', cor, 'LineWidth', 1.5, 'HandleVisibility', 'off');
+    plot([x_base(1), x_env(1)], [y_base(1), y_env(1)], 'Color', cor, 'LineWidth', 1.5, 'HandleVisibility', 'off');
+    plot([x_base(end), x_env(end)], [y_base(end), y_env(end)], 'Color', cor, 'LineWidth', 1.5, 'HandleVisibility', 'off');
 end
+
+
+handles_legenda = [h_pos, h_neg];
+textos_legenda = {};
+if ~isempty(h_pos), textos_legenda{end+1} = 'Fluxo Positivo'; end
+if ~isempty(h_neg), textos_legenda{end+1} = 'Fluxo Negativo'; end
+legend(handles_legenda, textos_legenda, 'Location', 'best');
+
 end

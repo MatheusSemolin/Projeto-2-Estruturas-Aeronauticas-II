@@ -125,6 +125,9 @@ else
     escala = (0.2 * max_dim) / sigma_max;
 end
 
+cor_pos = 'b';
+cor_neg = 'r';
+
 % Plota o diagrama de tensões para cada painel
 for p = 1:P
     id_n1 = panels(p,1);
@@ -159,30 +162,48 @@ for p = 1:P
     x_sig2 = x2 + sig2 * escala * nx;
     y_sig2 = y2 + sig2 * escala * ny;
 
+
     % Muda a cor conforme o sinal
     if sig1 * sig2 < 0
         % Encontra a fração 't' onde a tensão é zero
         t = abs(sig1) / (abs(sig1) + abs(sig2));
-
         x_zero = x1 + t * (x2 - x1);
         y_zero = y1 + t * (y2 - y1);
 
-        % Nó 1 até o Ponto Zero
-        sig_media_1 = (sig1 + 0) / 2;
-        if sig_media_1 >= 0, cor_1 = 'g'; else, cor_1 = 'r'; end
-        plot([x_sig1, x_zero], [y_sig1, y_zero], cor_1, 'LineWidth', 1.5);
-
-        % Ponto Zero até o Nó 2
-        sig_media_2 = (0 + sig2) / 2;
-        if sig_media_2 >= 0, cor_2 = 'g'; else, cor_2 = 'r'; end
-        plot([x_zero, x_sig2], [y_zero, y_sig2], cor_2, 'LineWidth', 1.5);
-    else
-        % Sem mudança de sinal
-        if (sig1 + sig2) / 2 >= 0
-            cor = 'g';
+        % Polígono 1: Nó 1 até o Ponto Zero (Triângulo)
+        if sig1 >= 0
+            cor = cor_pos; 
         else
-            cor = 'r';
+            cor = cor_neg; 
         end
-        plot([x_sig1, x_sig2], [y_sig1, y_sig2], cor, 'LineWidth', 1.5);
+        fill([x1, x_zero, x_sig1], [y1, y_zero, y_sig1], cor, 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        plot([x_sig1, x_zero], [y_sig1, y_zero], 'Color', cor, 'LineWidth', 1.5); % Linha de borda
+
+        % Polígono 2: Ponto Zero até o Nó 2 (Triângulo)
+        if sig2 >= 0
+            cor = cor_pos;
+        else 
+            cor = cor_neg; 
+        end
+        fill([x_zero, x2, x_sig2], [y_zero, y2, y_sig2], cor, 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        plot([x_zero, x_sig2], [y_zero, y_sig2], 'Color', cor, 'LineWidth', 1.5); % Linha de borda
+    else
+        % Sem mudança de sinal (Quadrilátero)
+        if (sig1 + sig2) / 2 >= 0
+            cor = cor_pos; 
+        else
+            cor = cor_neg; 
+        end
+        fill([x1, x2, x_sig2, x_sig1], [y1, y2, y_sig2, y_sig1], cor, 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+        plot([x_sig1, x_sig2], [y_sig1, y_sig2], 'Color', cor, 'LineWidth', 1.5); % Linha de borda
     end
+
+    % Cria polígonos fantasmas (invisíveis no gráfico) apenas para gerar a legenda
+    h_pos = fill(NaN, NaN, 'b', 'FaceAlpha', 0.3, 'EdgeColor', 'b', 'LineWidth', 1.5);
+    h_neg = fill(NaN, NaN, 'r', 'FaceAlpha', 0.3, 'EdgeColor', 'r', 'LineWidth', 1.5);
+
+    % Desenha a legenda associando as cores aos respectivos significados
+    legend([h_pos, h_neg], {'Tração', 'Compressão'}, 'Location', 'southeast');
+
 end
+

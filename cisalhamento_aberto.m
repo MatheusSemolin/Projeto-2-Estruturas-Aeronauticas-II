@@ -22,7 +22,7 @@ function [sec] = cisalhamento_aberto(sec)
 
 nodes = sec.malha.nodes;
 panels = sec.malha.panels;
-panels(:,4) = 0; 
+panels(:,4) = 0;
 Vx = sec.cargas.Vx;
 Vy = sec.cargas.Vy;
 
@@ -118,7 +118,7 @@ for p = 1:P
     q_total_sym(p) = q_sym(p) + q0(p);
     % fprintf('q0_%d = %.4f N/mm\n', panels(p,1), q0(p));
 end
-% 
+%
 % % fprintf('\n--- EQUAÇÕES SIMBÓLICAS DO FLUXO q(s) ---\n');
 % for p = 1:P
 %     eq_formatada = char(vpa(expand(q_total_sym(p)/panels(p,3)), 3));
@@ -172,8 +172,8 @@ if any(idx_com_ref)
         h(i) = scatter(nodes(idx_area, 2), nodes(idx_area, 3), 100, cores(i,:), ...
             'filled', 'square', 'MarkerEdgeColor', 'k');
     end
-legend(h, compose('Reforçador %d', 1:num_areas), ...
-    'Location', 'best');
+    legend(h, compose('Reforçador %d', 1:num_areas), ...
+        'Location', 'best');
 end
 % Escala
 tau_max = zeros(P,1);
@@ -194,6 +194,10 @@ if max(abs(tau_max)) == 0
 else
     escala = (0.2 * max_dim) / max(abs(tau_max));
 end
+
+% Inicializa variáveis de handles para a legenda
+h_pos = [];
+h_neg = [];
 
 % Plota os vetores normais
 for p = 1:P
@@ -229,28 +233,60 @@ for p = 1:P
     y_base = y1 + (dy/L) * s_vals;
 
     % Componentes U e V dos vetores
-    % Componentes U e V dos vetores
     U = tau_vals * escala * nx;
     V = tau_vals * escala * ny;
 
-    idx_pos = tau_vals >= 0;
-    idx_neg = tau_vals < 0;
-
-    % Plot positivos
-    quiver(x_base(idx_pos), y_base(idx_pos), U(idx_pos), V(idx_pos), 0, ...
-        'Color', 'b', 'ShowArrowHead', 'off', 'LineWidth', 1.2, 'HandleVisibility', 'off');
-
-    % Plot negativos
-    quiver(x_base(idx_neg), y_base(idx_neg), U(idx_neg), V(idx_neg), 0, ...
-        'Color', 'r', 'ShowArrowHead', 'off', 'LineWidth', 1.2, 'HandleVisibility', 'off');
-
-    % Envelope
     x_env = x_base + U;
     y_env = y_base + V;
-    plot(x_env, y_env, 'k', 'LineWidth', 1.5, 'HandleVisibility', 'off');
+
+    x_poly = [x_base, fliplr(x_env)];
+    y_poly = [y_base, fliplr(y_env)];
+
+    if mean(tau_vals) >= 0
+        cor = 'b';
+    else
+        cor = 'r';
+    end
+
+    % Fundo semitransparente
+    h_fill = fill(x_poly, y_poly, cor, 'FaceAlpha', 0.3, 'EdgeColor', cor, 'HandleVisibility', 'off');
+    if mean(tau_vals) >= 0 && isempty(h_pos)
+        h_pos = h_fill;
+    elseif mean(tau_vals) < 0 && isempty(h_neg)
+        h_neg = h_fill;
+    end
+
+    % Riscos internos (hachura) sobre o fundo
+    quiver(x_base, y_base, U, V, 0, 'Color', cor, 'ShowArrowHead', 'off', 'LineWidth', 1.2, 'HandleVisibility', 'off');
+
+    % Contornos do diagrama
+    plot(x_env, y_env, 'Color', cor, 'LineWidth', 1.5, 'HandleVisibility', 'off');
+    plot([x_base(1), x_env(1)], [y_base(1), y_env(1)], 'Color', cor, 'LineWidth', 1.5, 'HandleVisibility', 'off');
+    plot([x_base(end), x_env(end)], [y_base(end), y_env(end)], 'Color', cor, 'LineWidth', 1.5, 'HandleVisibility', 'off');
 end
+
 sec.resultados.Tau_fletor_max = tau_max;
 for i = 1:P
-sec.resultados.Tau_fletor_sym{i} = matlabFunction(q_total_sym(i)/panels(i,3), 'Vars', s);
+    sec.resultados.Tau_fletor_sym{i} = matlabFunction(q_total_sym(i)/panels(i,3), 'Vars', s);
 end
+
+
+handles_legenda = [];
+textos_legenda = {};
+if exist('h', 'var') && ~isempty(h)
+    handles_legenda = [handles_legenda, h];
+    textos_legenda = [textos_legenda, compose('Reforçador %d', 1:length(h))];
+end
+if ~isempty(h_pos)
+    handles_legenda = [handles_legenda, h_pos];
+    textos_legenda{end+1} = 'Fluxo Positivo';
+end
+if ~isempty(h_neg)
+    handles_legenda = [handles_legenda, h_neg];
+    textos_legenda{end+1} = 'Fluxo Negativo';
+end
+
+if ~isempty(handles_legenda)
+    legend(handles_legenda, textos_legenda, 'Location', 'best');
+
 end
